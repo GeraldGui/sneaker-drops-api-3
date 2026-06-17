@@ -43,22 +43,33 @@ public class SneakerService {
         return results;
     }
 
-    public Sneaker addSneaker(String model, int year, double price, long brandId) {
-        Brand brand = brandRepository.findById(brandId).orElseThrow(() -> new NotFoundException("No brand with id " + brandId));
-        return sneakerRepository.save(new Sneaker(model, price, year, brand));
-    }
-
-    public Sneaker updatePrice(long id, double price) {
-        Sneaker sneaker = byId(id);
-        sneaker.setPrice(price);
+   public Sneaker createSneaker(Sneaker sneaker) {
+        sneaker.setId(null);
+        sneaker.setBrand(resolveBrand(sneaker));
         return sneakerRepository.save(sneaker);
-    }
+   }
+
+   public Sneaker updateSneaker(long id, Sneaker updated){
+        Sneaker existing = byId(id);
+        if (existing == null)
+            return null;
+
+        existing.setModel(updated.getModel());
+        existing.setPrice(updated.getPrice());
+        existing.setReleaseYear(updated.getReleaseYear());
+        existing.setBrand(resolveBrand(updated));
+
+        return sneakerRepository.save(existing);
+   }
 
     public void deleteSneaker(long id) {
-        if (!sneakerRepository.existsById(id)) {
-            throw new NotFoundException("No sneaker found by id " + id);
-        }
-
         sneakerRepository.deleteById(id);
+    }
+
+    private Brand resolveBrand(Sneaker sneaker) {
+        if (sneaker.getBrand() == null || sneaker.getBrand().getId() == null) {
+            return null;
+        }
+            return brandRepository.findById(sneaker.getBrand().getId()).orElse(null);
     }
 }
